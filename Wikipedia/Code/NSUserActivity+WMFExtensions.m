@@ -1,15 +1,41 @@
 #import <WMF/NSUserActivity+WMFExtensions.h>
 #import <WMF/WMF-Swift.h>
+#import <math.h>
 
 @import CoreSpotlight;
 @import MobileCoreServices;
 
 NSString *const WMFNavigateToActivityNotification = @"WMFNavigateToActivityNotification";
+NSString *const WMFPlacesLatitudeKey = @"WMFPlacesLatitude";
+NSString *const WMFPlacesLongitudeKey = @"WMFPlacesLongitude";
 
 // Use to suppress "User-facing text should use localized string macro" Analyzer warning
 // where appropriate.
 __attribute__((annotate("returns_localized_nsstring"))) static inline NSString *wmf_localizationNotNeeded(NSString *s) {
     return s;
+}
+
+/// Parses a finite Double from a query value using a POSIX locale. Returns NO for empty/non-numeric/NaN/Inf.
+static BOOL WMFParseFiniteDouble(NSString *_Nullable value, double *outValue) {
+    if (value.length == 0 || outValue == NULL) {
+        return NO;
+    }
+    NSScanner *scanner = [NSScanner scannerWithString:value];
+    scanner.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+    double parsed = 0;
+    if (![scanner scanDouble:&parsed] || !scanner.isAtEnd) {
+        return NO;
+    }
+    if (isnan(parsed) || isinf(parsed)) {
+        return NO;
+    }
+    *outValue = parsed;
+    return YES;
+}
+
+/// Validates geographic bounds for Places deep links.
+static BOOL WMFIsValidPlacesCoordinate(double latitude, double longitude) {
+    return latitude >= -90.0 && latitude <= 90.0 && longitude >= -180.0 && longitude <= 180.0;
 }
 
 @implementation NSUserActivity (WMFExtensions)
@@ -62,15 +88,35 @@ __attribute__((annotate("returns_localized_nsstring"))) static inline NSString *
 + (instancetype)wmf_placesActivityWithURL:(NSURL *)activityURL {
     NSURLComponents *components = [NSURLComponents componentsWithURL:activityURL resolvingAgainstBaseURL:NO];
     NSURL *articleURL = nil;
+    NSString *latitudeString = nil;
+    NSString *longitudeString = nil;
+
     for (NSURLQueryItem *item in components.queryItems) {
         if ([item.name isEqualToString:@"WMFArticleURL"]) {
             NSString *articleURLString = item.value;
             articleURL = [NSURL URLWithString:articleURLString];
-            break;
+        } else if ([item.name isEqualToString:@"lat"]) {
+            latitudeString = item.value;
+        } else if ([item.name isEqualToString:@"long"] || [item.name isEqualToString:@"lon"]) {
+            // Accept both `long` (Places app contract) and `lon` as an alias.
+            longitudeString = item.value;
         }
     }
+
     NSUserActivity *activity = [self wmf_pageActivityWithName:@"Places"];
     activity.webpageURL = articleURL;
+
+    double latitude = 0;
+    double longitude = 0;
+    if (WMFParseFiniteDouble(latitudeString, &latitude) &&
+        WMFParseFiniteDouble(longitudeString, &longitude) &&
+        WMFIsValidPlacesCoordinate(latitude, longitude)) {
+        NSMutableDictionary *userInfo = [activity.userInfo mutableCopy] ?: [NSMutableDictionary dictionary];
+        userInfo[WMFPlacesLatitudeKey] = @(latitude);
+        userInfo[WMFPlacesLongitudeKey] = @(longitude);
+        activity.userInfo = userInfo;
+    }
+
     return activity;
 }
 

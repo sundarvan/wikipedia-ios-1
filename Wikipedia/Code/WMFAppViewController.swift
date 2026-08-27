@@ -1324,7 +1324,12 @@ final class WMFAppViewController: UITabBarController, AppTabBarDelegate {
             dismissPresentedViewControllers()
             selectedIndex = WMFAppTabType.places.rawValue
             currentTabNavigationController?.popToRootViewController(animated: animated)
-            if let articleURL = activity.wmf_linkURL() {
+            // Prefer explicit lat/long from Places app deep links over optional article URL.
+            if let latitude = (activity.userInfo?[WMFPlacesLatitudeKey] as? NSNumber)?.doubleValue,
+               let longitude = (activity.userInfo?[WMFPlacesLongitudeKey] as? NSNumber)?.doubleValue {
+                let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+                placesViewController.centerMap(on: coordinate, animated: animated)
+            } else if let articleURL = activity.wmf_linkURL() {
                 placesViewController.updateViewModeToMap()
                 placesViewController.showArticleURL(articleURL)
             }

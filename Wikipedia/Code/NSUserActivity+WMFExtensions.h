@@ -17,6 +17,10 @@ typedef NS_ENUM(NSUInteger, WMFUserActivityType) {
 
 extern NSString *const WMFNavigateToActivityNotification;
 
+/// userInfo keys for `wikipedia://places?lat=&long=` deep links
+extern NSString *const WMFPlacesLatitudeKey;
+extern NSString *const WMFPlacesLongitudeKey;
+
 @interface NSUserActivity (WMFExtensions)
 
 + (void)wmf_navigateToActivity:(NSUserActivity *)activity;

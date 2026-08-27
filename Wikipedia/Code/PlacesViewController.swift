@@ -2100,6 +2100,35 @@ class PlacesViewController: ArticleLocationCollectionViewController, UISearchBar
         currentSearch = PlaceSearch(filter: .top, type: .location, origin: .user, sortStyle: .links, string: nil, region: region, localizedDescription: title, searchResult: searchResult, siteURL: articleURL.wmf_site)
     }
 
+    /// Centers the Places map on an externally provided coordinate (deep link), overriding user location.
+    @objc public func centerMap(on coordinate: CLLocationCoordinate2D, animated: Bool) {
+        guard CLLocationCoordinate2DIsValid(coordinate), view != nil else { // force view instantiation
+            return
+        }
+
+        updateViewModeToMap()
+
+        // ~10 km region around the deep-linked point (same helper used elsewhere in Places).
+        let region = [coordinate].wmf_boundingRegion(with: 10_000)
+        let description = String(format: "%.5f, %.5f", coordinate.latitude, coordinate.longitude)
+
+        // Setting currentSearch updates mapRegion via performSearch — do not call recenterOnUserLocation.
+        currentSearch = PlaceSearch(
+            filter: .top,
+            type: .location,
+            origin: .user,
+            sortStyle: .links,
+            string: nil,
+            region: region,
+            localizedDescription: description,
+            searchResult: nil
+        )
+
+        if !animated, let mapRegion {
+            mapView.setRegion(mapRegion, animated: false)
+        }
+    }
+
     fileprivate func searchForFirstSearchSuggestion() {
         if !searchSuggestionController.searches[PlaceSearchSuggestionController.completionSection].isEmpty {
             currentSearch = searchSuggestionController.searches[PlaceSearchSuggestionController.completionSection][0]

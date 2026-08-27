@@ -98,7 +98,7 @@ static BOOL WMFIsValidPlacesCoordinate(double latitude, double longitude) {
         } else if ([item.name isEqualToString:@"lat"]) {
             latitudeString = item.value;
         } else if ([item.name isEqualToString:@"long"] || [item.name isEqualToString:@"lon"]) {
-            // Accept both `long` (assignment contract) and `lon` as an alias.
+            // Accept both `long` (Places app contract) and `lon` as an alias.
             longitudeString = item.value;
         }
     }

@@ -12,11 +12,48 @@ The official Wikipedia iOS app.
 ## Building and Running
 
 Note: Your Xcode version must be at least 16.0.
-In the directory, run `./scripts/setup`.  Note: going to `scripts` directory and running `setup` will not work due to relative paths.
 
-Running `scripts/setup` will setup your computer to build and run the app. The script assumes you have Xcode installed already. It will install [homebrew](https://brew.sh), [SwiftLint](https://github.com/realm/SwiftLint), and [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html). It will also create a pre-commit hook that uses ClangFormat for linting Objective-C code.
+### First-time setup (required after clone)
 
-After running `scripts/setup`, you should be able to open `Wikipedia.xcodeproj` and run the app on the iOS Simulator (using the **Wikipedia** scheme and target). If you encounter any issues, please don't hesitate to let us know via a [bug report](https://phabricator.wikimedia.org/maniphest/task/edit/form/1/?title=[BUG]&projects=wikipedia-ios-app-product-backlog,ios-bug-backlog&description=%3D%3D%3D+How+many+times+were+you+able+to+reproduce+it?%0D%0A%0D%0A%3D%3D%3D+Steps+to+reproduce%0D%0A%23+%0D%0A%23+%0D%0A%23+%0D%0A%0D%0A%3D%3D%3D+Expected+results%0D%0A%0D%0A%3D%3D%3D+Actual+results%0D%0A%0D%0A%3D%3D%3D+Screenshots%0D%0A%0D%0A%3D%3D%3D+Environments+observed%0D%0A**App+version%3A+**+%0D%0A**OS+versions%3A**+%0D%0A**Device+model%3A**+%0D%0A**Device+language%3A**+%0D%0A%0D%0A%3D%3D%3D+Regression?+%0D%0A%0D%0A+Tag++task+with+%23Regression+%0A).
+From the **repository root** (not inside `scripts/`), run:
+
+```bash
+./scripts/setup
+```
+
+Or, for a non-interactive setup that is enough for Simulator builds:
+
+```bash
+./scripts/setup ci
+```
+
+Running `scripts/setup` will set up your computer to build and run the app. The script assumes you have Xcode installed already. It will install [homebrew](https://brew.sh), [SwiftLint](https://github.com/realm/SwiftLint), and [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html). It will also create a pre-commit hook that uses ClangFormat for linting Objective-C code, and generate the local signing config file:
+
+`Configurations/OpenSourceDebug.xcconfig`
+
+That file is **gitignored** (it is machine-specific), so a fresh clone will not contain it. You must run setup once on each machine before opening the project.
+
+After running `scripts/setup`, close Xcode if it is already open, then open `Wikipedia.xcodeproj` and run the app on the iOS Simulator (using the **Wikipedia** scheme and target).
+
+### Common error: missing `OpenSourceDebug.xcconfig`
+
+If Xcode shows:
+
+```text
+Unable to open base configuration reference file
+'.../Configurations/OpenSourceDebug.xcconfig'
+```
+
+generate the missing file, then reopen the project:
+
+```bash
+./scripts/setup_bundle_id ci
+```
+
+- Use `ci` for Simulator builds (uses the default development team).
+- Omit `ci` (`./scripts/setup_bundle_id`) if you need to select your own Apple Developer Team ID for a physical device.
+
+If you encounter any other issues, please don't hesitate to let us know via a [bug report](https://phabricator.wikimedia.org/maniphest/task/edit/form/1/?title=[BUG]&projects=wikipedia-ios-app-product-backlog,ios-bug-backlog&description=%3D%3D%3D+How+many+times+were+you+able+to+reproduce+it?%0D%0A%0D%0A%3D%3D%3D+Steps+to+reproduce%0D%0A%23+%0D%0A%23+%0D%0A%23+%0D%0A%0D%0A%3D%3D%3D+Expected+results%0D%0A%0D%0A%3D%3D%3D+Actual+results%0D%0A%0D%0A%3D%3D%3D+Screenshots%0D%0A%0D%0A%3D%3D%3D+Environments+observed%0D%0A**App+version%3A+**+%0D%0A**OS+versions%3A**+%0D%0A**Device+model%3A**+%0D%0A**Device+language%3A**+%0D%0A%0D%0A%3D%3D%3D+Regression?+%0D%0A%0D%0A+Tag++task+with+%23Regression+%0A).
 
 ### Required Dependencies
 If you'd rather install the development prerequisites yourself without our script:
